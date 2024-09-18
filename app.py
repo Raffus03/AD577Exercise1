@@ -1,9 +1,12 @@
 import streamlit as st
 from transformers import pipeline
+import requests
+import io
+from PIL import Image
 
 # Set up the page configuration for a wide layout and better experience
 st.set_page_config(
-    page_title="Translation App",
+    page_title="Translation & Image Generation App",
     layout="wide",  
 )
 
@@ -37,12 +40,13 @@ st.markdown("""
     }
     </style>
     <div class="header">
-        <h1>🤗 Translation App</h1>
-        <p>Translate text using pre-trained models from <a href="https://huggingface.co/" target="_blank">Hugging Face</a>.</p>
+        <h1>🤗 Translation & Image Generation App</h1>
+        <p>Translate text and generate images using pre-trained models from <a href="https://huggingface.co/" target="_blank">Hugging Face</a>.</p>
     </div>
     """, unsafe_allow_html=True)
 
-# Add explanation for the app
+# Section: Translation functionality
+st.markdown("### Translation Feature")
 st.markdown("""
     This app allows you to translate text into multiple languages using Hugging Face's pre-trained models.
 """)
@@ -86,3 +90,34 @@ if translator:
             st.error("Please enter text to translate.")
 else:
     st.error("Please select a valid language.")
+
+# Section: Image generation functionality
+st.markdown("---")
+st.markdown("### Image Generation Feature")
+st.markdown("""
+    Generate an image based on a prompt using Hugging Face's API.
+""")
+
+# Input for image generation prompt
+image_prompt = st.text_input("Enter a prompt for the image you want to generate:")
+
+API_URL = "https://api-inference.huggingface.co/models/black-forest-labs/FLUX.1-schnell"
+headers = {"Authorization": "Bearer hf_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx"}
+
+def query(payload):
+    response = requests.post(API_URL, headers=headers, json=payload)
+    return response.content
+
+# Generate and display image
+if st.button("Generate Image"):
+    if image_prompt:
+        try:
+            image_bytes = query({
+                "inputs": image_prompt,
+            })
+            image = Image.open(io.BytesIO(image_bytes))
+            st.image(image, caption="Generated Image")
+        except Exception as e:
+            st.error(f"Error generating image: {e}")
+    else:
+        st.error("Please enter a prompt to generate an image.")
